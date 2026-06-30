@@ -37,8 +37,19 @@ export function apiEndpoint(): string {
     return import.meta.env.VITE_HOSTED_API_URL || 'https://invoicing.co';
   }
 
+  const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+  const isLocalApiUrl =
+    configuredApiUrl !== undefined &&
+    /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(
+      configuredApiUrl
+    );
+
+  if (import.meta.env.PROD && isLocalApiUrl) {
+    return window.location.origin || 'https://invoicing.co';
+  }
+
   return (
-    import.meta.env.VITE_API_URL ||
+    configuredApiUrl ||
     window.location.origin ||
     'https://invoicing.co'
   );
