@@ -41,6 +41,10 @@ export const useInvoiceProducts = (params?: Params) => {
         type_id: InvoiceItemType.Product,
         product_key: product.product_key,
         quantity: company?.fill_products ? product.quantity : 1,
+        custom_value1: product.custom_value1,
+        custom_value2: product.custom_value2,
+        custom_value3: product.custom_value3,
+        custom_value4: product.custom_value4,
         ...(company?.fill_products && {
           line_total: Number(
             (product.price * product.quantity).toFixed(userNumberPrecision)
@@ -54,10 +58,6 @@ export const useInvoiceProducts = (params?: Params) => {
           tax_name3: product.tax_name3,
           tax_rate3: product.tax_rate3,
           tax_id: '',
-          custom_value1: product.custom_value1,
-          custom_value2: product.custom_value2,
-          custom_value3: product.custom_value3,
-          custom_value4: product.custom_value4,
         }),
       }));
 

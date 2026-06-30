@@ -70,6 +70,26 @@ export function ProductForm(props: Props) {
         />
       </Element>
 
+      <Element leftSide="Consulting hours per quantity">
+        <NumberInputField
+          value={product.custom_value1 || ''}
+          onValueChange={(value) => handleChange('custom_value1', value)}
+          errorMessage={errors?.errors.custom_value1}
+        />
+      </Element>
+
+      <Element leftSide="Marks consulting hours">
+        <Toggle
+          checked={product.custom_value2 === 'consulting-hours'}
+          onValueChange={(value) =>
+            handleChange(
+              'custom_value2',
+              value ? 'consulting-hours' : ''
+            )
+          }
+        />
+      </Element>
+
       <Element leftSide={t('price')}>
         <NumberInputField
           value={product.price || ''}

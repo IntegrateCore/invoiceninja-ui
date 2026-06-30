@@ -25,6 +25,7 @@ import { PaymentTermsBadge } from './PaymentTermsBadge';
 import { TaxDataModal } from './TaxDataModal';
 import { TaxExemptBadge } from './TaxExemptBadge';
 import { Settings } from '$app/common/interfaces/company.interface';
+import { numberFormat } from '$app/common/helpers/number-format';
 
 interface Props {
   client: Client;
@@ -37,7 +38,6 @@ export function Details(props: Props) {
 
   const colors = useColorScheme();
   const company = useCurrentCompany();
-
   const getSettingWithLevel = useGetSettingWithLevel();
   const formatMoney = useFormatMoney();
   const customField = useCustomField();
@@ -178,6 +178,23 @@ export function Details(props: Props) {
                 </span>
               </div>
             )}
+
+            <div className="flex flex-col space-y-1">
+              <span
+                className="text-sm font-medium"
+                style={{ color: colors.$22 }}
+              >
+                Time left
+              </span>
+
+              <span
+                className="text-sm font-medium"
+                style={{ color: colors.$3 }}
+              >
+                {numberFormat(client.consulting_hours_balance ?? 0, 2)}{' '}
+                {t('hours')}
+              </span>
+            </div>
 
             {client.phone.length > 1 && (
               <div className="flex flex-col space-y-1">

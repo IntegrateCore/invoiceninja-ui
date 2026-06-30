@@ -124,6 +124,21 @@ export function Details(props: Props) {
         />
       </Element>
 
+      <Element leftSide="Remaining hours">
+        <InputField
+          type="number"
+          step="0.01"
+          value={props.client?.consulting_hours_balance ?? ''}
+          onValueChange={(value) =>
+            handleChange(
+              'consulting_hours_balance',
+              value === '' ? 0 : parseFloat(value)
+            )
+          }
+          errorMessage={props.errors?.errors.consulting_hours_balance}
+        />
+      </Element>
+
       <Element leftSide={t('website')}>
         <InputField
           value={props.client?.website || ''}

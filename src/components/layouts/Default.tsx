@@ -128,7 +128,7 @@ export function Default(props: Props) {
   const navigate = useNavigate();
 
   return (
-    <div>
+    <div className="flex min-h-screen flex-col">
       <div className="fixed bottom-4 right-4 z-50 flex items-end flex-col-reverse space-y-4 space-y-reverse">
         <ActivateCompany />
         <VerifyEmail />
@@ -294,7 +294,7 @@ export function Default(props: Props) {
 
         {props.aboveMainContainer}
 
-        <main className="flex-1">
+        <main className="flex flex-1 flex-col">
           {(props.breadcrumbs || props.topRight || props.afterBreadcrumbs) &&
             props.breadcrumbs.length > 0 && (
               <div className="pt-4 px-4 md:px-6 md:pt-6 dark:text-gray-100 flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
@@ -312,7 +312,7 @@ export function Default(props: Props) {
 
           <div
             style={{ color: colors.$3, backgroundColor: colors.$23 }}
-            className="p-4 xl:px-6 dark:text-gray-100"
+            className="flex-1 p-4 xl:px-6 dark:text-gray-100"
           >
             {props.children}
           </div>

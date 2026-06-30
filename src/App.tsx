@@ -277,7 +277,7 @@ export function App() {
 
   return (
     <>
-      <div className="App">
+      <div className="App min-h-screen">
         <Toaster position="top-center" />
         {routes}
       </div>
