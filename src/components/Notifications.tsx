@@ -341,9 +341,11 @@ export function Notifications() {
       }
 
       if (event === 'App\\Events\\Invoice\\InvoiceWasViewed') {
+        const notificationEmails = companyUser?.notifications?.email ?? [];
+
         if (
-          !companyUser?.notifications.email.includes('invoice_viewed') ||
-          !companyUser?.notifications.email.includes('invoice_viewed_user')
+          !notificationEmails.includes('invoice_viewed') ||
+          !notificationEmails.includes('invoice_viewed_user')
         ) {
           return;
         }
