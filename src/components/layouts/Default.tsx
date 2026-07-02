@@ -93,9 +93,11 @@ export function Default(props: Props) {
   useSocketEvent<Invoice>({
     on: ['App\\Events\\Invoice\\InvoiceWasViewed'],
     callback: ({ data }) => {
+      const notificationEmails = companyUser?.notifications?.email ?? [];
+
       if (
-        !companyUser?.notifications.email.includes('invoice_viewed') ||
-        !companyUser?.notifications.email.includes('invoice_viewed_user')
+        !notificationEmails.includes('invoice_viewed') ||
+        !notificationEmails.includes('invoice_viewed_user')
       ) {
         return;
       }
