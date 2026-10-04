@@ -64,9 +64,11 @@ function FolderRow({
     }
   };
   return (
-    <tr className="border-b align-top">
-      <td className="py-4 pr-4 break-words">{assignment.folder}</td>
-      <td className="py-3 pr-4" style={{ minWidth: 220 }}>
+    <tr className="grid grid-cols-[minmax(0,1fr)_auto] border-b align-top sm:table-row">
+      <td className="col-span-2 pt-4 pb-1 break-words font-medium sm:py-4 sm:pr-4 sm:font-normal">
+        {assignment.folder}
+      </td>
+      <td className="min-w-0 py-3 pr-4 sm:min-w-[220px]">
         {assignment.assigned_to_other_company ? (
           <span>{t('client_library_other_company')}</span>
         ) : (
@@ -76,6 +78,7 @@ function FolderRow({
               inputLabel={String(t('client'))}
               readonly={busy}
               withoutAction
+              preserveSearchOnEntriesChange
               onChange={(client) => setClientId(client.id)}
               onClearButtonClick={() => setClientId('')}
             />
@@ -90,7 +93,7 @@ function FolderRow({
           </>
         )}
       </td>
-      <td className="py-4 text-right">
+      <td className="py-4 text-right align-top">
         {!assignment.assigned_to_other_company && (
           <Button
             behavior="button"
@@ -154,8 +157,8 @@ export function ClientFolderManager() {
         {catalog.isError && <p role="alert">{t('client_library_failed')}</p>}
         {catalog.isFetching && <p role="status">{t('loading')}</p>}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
+          <table className="block w-full text-left text-sm sm:table">
+            <thead className="hidden sm:table-header-group">
               <tr className="border-b">
                 <th className="py-3 font-medium">{t('folder')}</th>
                 <th className="py-3 font-medium">{t('client')}</th>
@@ -164,7 +167,7 @@ export function ClientFolderManager() {
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="block sm:table-row-group">
               {catalog.data?.data.map((assignment) => (
                 <FolderRow
                   key={assignment.folder}

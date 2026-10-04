@@ -72,6 +72,7 @@ export interface ComboboxStaticProps<T = any> {
   onInputValueChange?: (value: string) => void;
   compareOnlyByValue?: boolean;
   withShadow?: boolean;
+  preserveSearchOnEntriesChange?: boolean;
 }
 
 export type Nullable<T> = T | null;
@@ -511,6 +512,7 @@ export function ComboboxStatic<T = any>({
   isDataLoading,
   compareOnlyByValue,
   withShadow,
+  preserveSearchOnEntriesChange,
 }: ComboboxStaticProps<T>) {
   const [t] = useTranslation();
 
@@ -546,8 +548,11 @@ export function ComboboxStatic<T = any>({
 
   const comboboxRef = useRef<HTMLDivElement>(null);
   const comboboxInputRef = useRef<HTMLInputElement>(null);
+  const previousInputValue = useRef(inputOptions.value);
+  const isSearching = useRef(false);
 
   useClickAway(comboboxRef, () => {
+    isSearching.current = false;
     setIsOpen(false);
   });
 
@@ -570,6 +575,7 @@ export function ComboboxStatic<T = any>({
   );
 
   const handleChangeValue = (value: Entry | null) => {
+    isSearching.current = false;
     if (value) {
       if (selectedValue && value.value === selectedValue.value) {
         onDismiss && onDismiss();
@@ -597,6 +603,20 @@ export function ComboboxStatic<T = any>({
   }, [selectedValue]);
 
   useEffect(() => {
+    const valueChanged = previousInputValue.current !== inputOptions.value;
+    previousInputValue.current = inputOptions.value;
+
+    // Refreshing search results must not replace an in-progress owner search.
+    if (
+      preserveSearchOnEntriesChange &&
+      !valueChanged &&
+      isOpen &&
+      isSearching.current
+    ) {
+      return;
+    }
+
+    isSearching.current = false;
     const entry = entries.find((entry) =>
       compareOnlyByValue
         ? entry.value === inputOptions.value
@@ -616,7 +636,7 @@ export function ComboboxStatic<T = any>({
             searchable: entryOptions.searchable || entryOptions.value,
           })
         : setSelectedValue(null);
-  }, [entries, inputOptions.value]);
+  }, [entries, inputOptions.value, preserveSearchOnEntriesChange]);
 
   useEffect(() => {
     if (initiallyVisible) {
@@ -666,7 +686,13 @@ export function ComboboxStatic<T = any>({
               data-testid="combobox-input-field"
               ref={comboboxInputRef}
               className="w-full rounded-md py-1.5 pl-3 pr-10 sm:text-sm sm:leading-6 focus:outline-none focus:ring-0"
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                isSearching.current = true;
+                setQuery(event.target.value);
+              }}
+              onBlur={() => {
+                isSearching.current = false;
+              }}
               displayValue={(entry: Nullable<Entry>) =>
                 entryOptions.inputLabelFn?.(entry?.resource) ??
                 (entry?.label || query)
@@ -682,6 +708,7 @@ export function ComboboxStatic<T = any>({
             {!readonly && (
               <HeadlessCombobox.Button
                 onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                  isSearching.current = false;
                   if (onDismiss) {
                     e.preventDefault();
 
@@ -865,6 +892,7 @@ export interface ComboboxAsyncProps<T> {
   compareOnlyByValue?: boolean;
   withShadow?: boolean;
   headers?: Record<string, string>;
+  preserveSearchOnEntriesChange?: boolean;
 }
 
 export function ComboboxAsync<T = any>({
@@ -889,6 +917,7 @@ export function ComboboxAsync<T = any>({
   compareOnlyByValue,
   withShadow,
   headers,
+  preserveSearchOnEntriesChange,
 }: ComboboxAsyncProps<T>) {
   const [entries, setEntries] = useState<Entry<T>[]>([]);
   const [url, setUrl] = useState(endpoint);
@@ -1096,6 +1125,7 @@ export function ComboboxAsync<T = any>({
       onInputValueChange={onInputValueChange}
       compareOnlyByValue={compareOnlyByValue}
       withShadow={withShadow}
+      preserveSearchOnEntriesChange={preserveSearchOnEntriesChange}
     />
   );
 }

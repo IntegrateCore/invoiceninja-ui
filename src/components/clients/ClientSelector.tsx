@@ -26,6 +26,7 @@ export interface ClientSelectorProps extends GenericSelectorProps<Client> {
   staleTime?: number;
   disableWithSpinner?: boolean;
   clearInputAfterSelection?: boolean;
+  preserveSearchOnEntriesChange?: boolean;
   dropdownLabelFn?: (client: Client) => string | JSX.Element;
 }
 
@@ -95,6 +96,7 @@ export function ClientSelector(props: ClientSelectorProps) {
         }}
         key="client_selector"
         clearInputAfterSelection={props.clearInputAfterSelection}
+        preserveSearchOnEntriesChange={props.preserveSearchOnEntriesChange}
       />
 
       <ErrorMessage className="mt-2">{props.errorMessage}</ErrorMessage>
