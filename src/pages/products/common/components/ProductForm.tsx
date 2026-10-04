@@ -84,10 +84,7 @@ export function ProductForm(props: Props) {
         <Toggle
           checked={product.custom_value2 === 'consulting-hours'}
           onValueChange={(value) =>
-            handleChange(
-              'custom_value2',
-              value ? 'consulting-hours' : ''
-            )
+            handleChange('custom_value2', value ? 'consulting-hours' : '')
           }
         />
       </Element>

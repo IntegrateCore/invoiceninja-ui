@@ -1,5 +1,6 @@
+import { DocumentLibrary } from './DocumentLibrary';
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { endpoint } from '$app/common/helpers';
 import { request } from '$app/common/helpers/request';
@@ -14,10 +15,18 @@ interface LibraryStatus {
   library_url: string | null;
   pending_migrations: number;
   document_count: number;
+  privacy_review_count: number;
 }
 
-export function ClientFileLibrary({ clientId }: { clientId: string }) {
+export function ClientFileLibrary({
+  clientId,
+  onConnectionChange,
+}: {
+  clientId: string;
+  onConnectionChange?: (connected: boolean) => void;
+}) {
   const [t] = useTranslation();
+  const queryClient = useQueryClient();
   const hasPermission = useHasPermission();
   const canEdit = hasPermission('edit_client');
   const url = endpoint('/api/v1/clients/:id/file-library', { id: clientId });
@@ -27,9 +36,13 @@ export function ClientFileLibrary({ clientId }: { clientId: string }) {
   });
   const folders = useQuery<string[]>({
     queryKey: ['client-file-library-folders', clientId],
-    queryFn: () => request('GET', `${url}/folders`).then((response) => response.data.data),
+    queryFn: () =>
+      request('GET', `${url}/folders`).then((response) => response.data.data),
     enabled: canEdit && status.data?.enabled === true,
   });
+  useEffect(() => {
+    onConnectionChange?.(Boolean(status.data?.folder));
+  }, [status.data?.folder, onConnectionChange]);
   const [folder, setFolder] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -50,6 +63,9 @@ export function ClientFileLibrary({ clientId }: { clientId: string }) {
         }
       );
       await status.refetch();
+      await queryClient.invalidateQueries({
+        queryKey: ['document-library', clientId],
+      });
       $refetch(['clients', 'documents']);
     } catch (failure: unknown) {
       const response = failure as {
@@ -77,78 +93,85 @@ export function ClientFileLibrary({ clientId }: { clientId: string }) {
   if (!status.data?.enabled) return null;
 
   return (
-    <Card title={t('client_file_library')} className="mb-4">
-      <CardContainer>
-        <p className="text-sm">{t('client_library_description')}</p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="w-full sm:max-w-lg">
-            <SelectField
-              label={t('client_library_folder')}
-              value={folder}
-              onValueChange={setFolder}
-              disabled={!canEdit || busy || Boolean(status.data.folder)}
-              withBlank
-              placeholder={t('client_library_choose')}
-            >
-              {(
-                folders.data ?? (status.data.folder ? [status.data.folder] : [])
-              ).map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </SelectField>
-          </div>
-          {canEdit && !status.data.folder && (
-            <Button
-              behavior="button"
-              disabled={busy || !folder}
-              onClick={() => save()}
-            >
-              {t(busy ? 'processing' : 'client_library_connect')}
-            </Button>
-          )}
-          {canEdit && status.data.folder && (
-            <Button
-              behavior="button"
-              type="secondary"
-              disabled={busy}
-              onClick={() => save(true)}
-            >
-              {t(busy ? 'processing' : 'client_library_refresh')}
-            </Button>
-          )}
-        </div>
-        {folders.isError && (
-          <p role="alert" className="text-sm">
-            {t('client_library_failed')}
-          </p>
-        )}
-        {error && (
-          <p role="alert" className="text-sm">
-            {error}
-          </p>
-        )}
-        {status.data.library_url && (
-          <div className="flex flex-col gap-2 text-sm">
-            <a
-              className="underline break-all"
-              href={status.data.library_url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t('client_library_open')}
-            </a>
-            {status.data.pending_migrations > 0 && (
-              <p role="status">
-                {t('client_library_pending', {
-                  count: status.data.pending_migrations,
-                })}
-              </p>
+    <>
+      <Card title={t('client_file_library')} className="mb-4">
+        <CardContainer>
+          <p className="text-sm">{t('client_library_description')}</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="w-full sm:max-w-lg">
+              <SelectField
+                label={t('client_library_folder')}
+                value={folder}
+                onValueChange={setFolder}
+                disabled={!canEdit || busy || Boolean(status.data.folder)}
+                withBlank
+                placeholder={t('client_library_choose')}
+              >
+                {(
+                  folders.data ??
+                  (status.data.folder ? [status.data.folder] : [])
+                ).map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </SelectField>
+            </div>
+            {canEdit && !status.data.folder && (
+              <Button
+                behavior="button"
+                disabled={busy || !folder}
+                onClick={() => save()}
+              >
+                {t(busy ? 'processing' : 'client_library_connect')}
+              </Button>
+            )}
+            {canEdit && status.data.folder && (
+              <Button
+                behavior="button"
+                type="secondary"
+                disabled={busy}
+                onClick={() => save(true)}
+              >
+                {t(busy ? 'processing' : 'client_library_refresh')}
+              </Button>
             )}
           </div>
-        )}
-      </CardContainer>
-    </Card>
+          {folders.isError && (
+            <p role="alert" className="text-sm">
+              {t('client_library_failed')}
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm">
+              {error}
+            </p>
+          )}
+          {status.data.library_url && (
+            <div className="flex flex-col gap-2 text-sm">
+              <a
+                className="underline break-all"
+                href={status.data.library_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {t('client_library_open')}
+              </a>
+              {status.data.privacy_review_count > 0 && (
+                <p role="status">{t('client_library_review_visibility')}</p>
+              )}
+              {status.data.pending_migrations > 0 && (
+                <p role="status">
+                  {t('client_library_pending', {
+                    count: status.data.pending_migrations,
+                  })}
+                </p>
+              )}
+            </div>
+          )}
+        </CardContainer>
+      </Card>
+      {status.data.folder && <DocumentLibrary clientId={clientId} />}
+    </>
   );
 }

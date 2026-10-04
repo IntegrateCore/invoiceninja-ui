@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ClientFileLibrary } from './ClientFileLibrary';
 /**
  * Invoice Ninja (https://invoiceninja.com).
@@ -26,6 +27,7 @@ export default function Documents() {
   const [t] = useTranslation();
 
   const { id } = useParams();
+  const [connected, setConnected] = useState(false);
   const colors = useColorScheme();
 
   const context: ClientContext = useOutletContext();
@@ -40,7 +42,9 @@ export default function Documents() {
 
   return (
     <>
-      {id && <ClientFileLibrary clientId={id} />}
+      {id && (
+        <ClientFileLibrary clientId={id} onConnectionChange={setConnected} />
+      )}
       <Card
         title={t('documents')}
         className="shadow-sm"
@@ -63,14 +67,16 @@ export default function Documents() {
               </div>
 
               <div className="w-full lg:w-2/3">
-                <DocumentsTable
-                  documents={client?.documents || []}
-                  onDocumentDelete={onSuccess}
-                  disableEditableOptions={
-                    !entityAssigned(client, true) &&
-                    !hasPermission('edit_client')
-                  }
-                />
+                {!connected && (
+                  <DocumentsTable
+                    documents={client?.documents || []}
+                    onDocumentDelete={onSuccess}
+                    disableEditableOptions={
+                      !entityAssigned(client, true) &&
+                      !hasPermission('edit_client')
+                    }
+                  />
+                )}
               </div>
             </>
           ) : (

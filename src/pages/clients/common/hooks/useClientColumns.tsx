@@ -10,6 +10,7 @@
 
 import { Link } from '$app/components/forms';
 import { date } from '$app/common/helpers';
+import { numberFormat } from '$app/common/helpers/number-format';
 import { route } from '$app/common/helpers/route';
 import { useFormatMoney } from '$app/common/hooks/money/useFormatMoney';
 import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
@@ -43,6 +44,7 @@ export const defaultColumns: string[] = [
   'id_number',
   'balance',
   'paid_to_date',
+  'consulting_hours_balance',
   'created_at',
   'last_login_at',
   'website',
@@ -59,6 +61,7 @@ export function useAllClientColumns() {
     'name',
     'balance',
     'paid_to_date',
+    'consulting_hours_balance',
     'contact_name',
     'contact_email',
     'last_login_at',
@@ -171,6 +174,12 @@ export function useClientColumns() {
           resource?.country_id,
           resource?.settings.currency_id
         ),
+    },
+    {
+      column: 'consulting_hours_balance',
+      id: 'consulting_hours_balance',
+      label: t('consulting_hours_balance'),
+      format: (value) => numberFormat(Number(value ?? 0), 2),
     },
     {
       column: 'contact_name',

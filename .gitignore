@@ -43,3 +43,7 @@ cypress/screenshots
 # Playwright
 node_modules/
 /playwright/.auth/
+
+# Local compiler cache and private verification artifacts
+*.tsbuildinfo
+/.local/

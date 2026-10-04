@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ClientFileLibrary } from '../../common/components/ClientFileLibrary';
 /**
  * Invoice Ninja (https://invoiceninja.com).
@@ -53,6 +54,7 @@ export interface Context {
 }
 export default function Documents() {
   const { id } = useParams();
+  const [connected, setConnected] = useState(false);
 
   const context: Context = useOutletContext();
 
@@ -68,34 +70,38 @@ export default function Documents() {
 
   return (
     <>
-      {id && <ClientFileLibrary clientId={id} />}
-      <DataTable
-        resource="document"
-        methodType="POST"
-        queryIdentificator="/api/v1/documents"
-        endpoint={route('/api/v1/clients/:id/documents', { id })}
-        columns={columns}
-        customFilters={filters}
-        customActions={actions}
-        customBulkActions={customBulkActions}
-        customFilterPlaceholder="type"
-        withResourcefulActions
-        rightSide={
-          <DataTableColumnsPicker
-            table="clientDocument"
-            columns={documentColumns as unknown as string[]}
-            defaultColumns={defaultColumns}
-          />
-        }
-        showEdit={() => false}
-        showRestore={() => false}
-        showArchive={() => false}
-        showDelete={() => false}
-        disableQuery={isPurgeOrMergeActionCalled}
-        withoutDefaultBulkActions
-        withoutStatusFilter
-        hideEditableOptions={!hasPermission('edit_expense')}
-      />
+      {id && (
+        <ClientFileLibrary clientId={id} onConnectionChange={setConnected} />
+      )}
+      {!connected && (
+        <DataTable
+          resource="document"
+          methodType="POST"
+          queryIdentificator="/api/v1/documents"
+          endpoint={route('/api/v1/clients/:id/documents', { id })}
+          columns={columns}
+          customFilters={filters}
+          customActions={actions}
+          customBulkActions={customBulkActions}
+          customFilterPlaceholder="type"
+          withResourcefulActions
+          rightSide={
+            <DataTableColumnsPicker
+              table="clientDocument"
+              columns={documentColumns as unknown as string[]}
+              defaultColumns={defaultColumns}
+            />
+          }
+          showEdit={() => false}
+          showRestore={() => false}
+          showArchive={() => false}
+          showDelete={() => false}
+          disableQuery={isPurgeOrMergeActionCalled}
+          withoutDefaultBulkActions
+          withoutStatusFilter
+          hideEditableOptions={!hasPermission('edit_expense')}
+        />
+      )}
     </>
   );
 }

@@ -6268,5 +6268,15 @@
   "client_library_refresh": "Refresh files",
   "client_library_open": "Open in file manager",
   "client_library_failed": "The file library could not be updated. Try again.",
-  "client_library_pending": "{{count}} existing documents still need to be copied. Select Refresh files to retry."
+  "client_library_pending": "{{count}} existing documents still need to be copied. Select Refresh files to retry.",
+  "client_library_zip": "Download folder as ZIP",
+  "client_library_empty": "There are no documents in this folder.",
+  "client_library_download_failed": "The documents could not be downloaded. Try again.",
+  "client_library_visibility": "Client access",
+  "client_library_shared": "Shared",
+  "client_library_private": "Private",
+  "consulting_hours_balance": "Time left (hours)",
+  "client_library_review_visibility": "A private file was moved or removed. New files stay private until you review their client access.",
+  "client_library_make_shared": "Share with client",
+  "client_library_make_private": "Make private"
 }
