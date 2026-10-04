@@ -10,14 +10,14 @@ import { ClientSelector } from '$app/components/clients/ClientSelector';
 import { Button } from '$app/components/forms';
 import { Modal } from '$app/components/Modal';
 
-interface FolderAssignment {
+export interface FolderAssignment {
   folder: string;
   assigned: boolean;
   client_id: string | null;
   client_name: string | null;
   assigned_to_other_company: boolean;
 }
-interface FolderCatalog {
+export interface FolderCatalog {
   enabled: boolean;
   data: FolderAssignment[];
 }

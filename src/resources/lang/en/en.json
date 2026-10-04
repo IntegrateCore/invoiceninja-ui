@@ -6285,5 +6285,8 @@
   "client_library_mapping_description": "Select the client whose Documents section should show each folder. Changing an assignment changes the folder view; files stay on the file server. Each client can have one folder.",
   "client_library_unassigned": "Unassigned",
   "client_library_other_company": "Assigned to another company",
-  "client_library_no_folders": "No client folders found."
+  "client_library_no_folders": "No client folders found.",
+  "client_library_current_client": "This client",
+  "client_library_transfer_option": "Assigned to {{client}} — transfer on save",
+  "client_library_transfer_notice": "Saving transfers this folder from {{client}} to this client. Files stay on the file server."
 }

@@ -4,10 +4,15 @@ import { useTranslation } from 'react-i18next';
 import { endpoint } from '$app/common/helpers';
 import { request } from '$app/common/helpers/request';
 import { useAdmin } from '$app/common/hooks/permissions/useHasPermission';
+import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
 import { $refetch } from '$app/common/hooks/useRefetch';
 import { Card, CardContainer } from '$app/components/cards';
 import { Button, SelectField } from '$app/components/forms';
-import { ClientFolderManager } from './ClientFolderManager';
+import {
+  ClientFolderManager,
+  type FolderAssignment,
+  type FolderCatalog,
+} from './ClientFolderManager';
 import { DocumentLibrary } from './DocumentLibrary';
 
 interface LibraryStatus {
@@ -29,16 +34,19 @@ export function ClientFileLibrary({
   const [t] = useTranslation();
   const queryClient = useQueryClient();
   const { isAdmin, isOwner } = useAdmin();
+  const company = useCurrentCompany();
   const canEdit = isAdmin || isOwner;
   const url = endpoint('/api/v1/clients/:id/file-library', { id: clientId });
   const status = useQuery<LibraryStatus>({
     queryKey: ['client-file-library', clientId],
     queryFn: () => request('GET', url).then((response) => response.data.data),
   });
-  const folders = useQuery<string[]>({
-    queryKey: ['client-file-library-folders', clientId],
+  const folders = useQuery<FolderCatalog>({
+    queryKey: ['client-folder-catalog', company.id],
     queryFn: () =>
-      request('GET', `${url}/folders`).then((response) => response.data.data),
+      request('GET', endpoint('/api/v1/client-file-folders')).then(
+        (response) => response.data
+      ),
     enabled: canEdit && status.data?.enabled === true,
   });
   useEffect(() => {
@@ -47,6 +55,28 @@ export function ClientFileLibrary({
   const [folder, setFolder] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const folderOptions: FolderAssignment[] =
+    canEdit && folders.data
+      ? folders.data.data
+      : status.data?.folder
+        ? [
+            {
+              folder: status.data.folder,
+              client_id: clientId,
+              client_name: null,
+              assigned: true,
+              assigned_to_other_company: false,
+            },
+          ]
+        : [];
+  const selectedAssignment = folders.data?.data.find(
+    (assignment) => assignment.folder === folder
+  );
+  const isTransfer = Boolean(
+    selectedAssignment?.client_id &&
+      selectedAssignment.client_id !== clientId &&
+      !selectedAssignment.assigned_to_other_company
+  );
 
   useEffect(() => {
     setFolder(status.data?.folder ?? '');
@@ -65,7 +95,10 @@ export function ClientFileLibrary({
       );
       await status.refetch();
       await queryClient.invalidateQueries({
-        queryKey: ['document-library', clientId],
+        queryKey: ['client-file-library'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['document-library'],
       });
       await queryClient.invalidateQueries({
         queryKey: ['client-folder-catalog'],
@@ -115,12 +148,22 @@ export function ClientFileLibrary({
                 withBlank
                 placeholder={t('client_library_choose')}
               >
-                {(
-                  folders.data ??
-                  (status.data.folder ? [status.data.folder] : [])
-                ).map((name) => (
-                  <option key={name} value={name}>
-                    {name}
+                {folderOptions.map((assignment) => (
+                  <option
+                    key={assignment.folder}
+                    value={assignment.folder}
+                    disabled={assignment.assigned_to_other_company}
+                  >
+                    {assignment.folder} —{' '}
+                    {assignment.assigned_to_other_company
+                      ? t('client_library_other_company')
+                      : assignment.client_id === clientId
+                        ? t('client_library_current_client')
+                        : assignment.client_id
+                          ? t('client_library_transfer_option', {
+                              client: assignment.client_name ?? t('client'),
+                            })
+                          : t('client_library_unassigned')}
                   </option>
                 ))}
               </SelectField>
@@ -128,7 +171,11 @@ export function ClientFileLibrary({
             {canEdit && folder !== (status.data.folder ?? '') && (
               <Button
                 behavior="button"
-                disabled={busy || !folder}
+                disabled={
+                  busy ||
+                  !folder ||
+                  selectedAssignment?.assigned_to_other_company
+                }
                 onClick={() => save()}
               >
                 {t(
@@ -151,6 +198,13 @@ export function ClientFileLibrary({
               </Button>
             )}
           </div>
+          {canEdit && isTransfer && (
+            <p role="status" className="text-sm">
+              {t('client_library_transfer_notice', {
+                client: selectedAssignment?.client_name ?? t('client'),
+              })}
+            </p>
+          )}
           {folders.isError && (
             <p role="alert" className="text-sm">
               {t('client_library_failed')}
