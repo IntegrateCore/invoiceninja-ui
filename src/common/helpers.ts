@@ -44,7 +44,7 @@ export function apiEndpoint(): string {
       configuredApiUrl
     );
 
-  if (import.meta.env.PROD && isLocalApiUrl) {
+  if (isLocalApiUrl) {
     return window.location.origin || 'https://invoicing.co';
   }
 
