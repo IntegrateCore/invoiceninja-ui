@@ -94,6 +94,7 @@ function FolderRow({
         {!assignment.assigned_to_other_company && (
           <Button
             behavior="button"
+            disableWithoutIcon
             disabled={busy || clientId === (assignment.client_id ?? '')}
             onClick={save}
           >
