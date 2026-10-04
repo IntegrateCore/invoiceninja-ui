@@ -1,3 +1,4 @@
+import { ClientFileLibrary } from '../../common/components/ClientFileLibrary';
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -67,6 +68,7 @@ export default function Documents() {
 
   return (
     <>
+      {id && <ClientFileLibrary clientId={id} />}
       <DataTable
         resource="document"
         methodType="POST"
