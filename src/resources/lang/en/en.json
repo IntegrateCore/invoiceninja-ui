@@ -6278,5 +6278,12 @@
   "consulting_hours_balance": "Time left (hours)",
   "client_library_review_visibility": "A private file was moved or removed. New files stay private until you review their client access.",
   "client_library_make_shared": "Share with client",
-  "client_library_make_private": "Make private"
+  "client_library_make_private": "Make private",
+  "client_library_preview_unavailable": "Preview unavailable for this file. You can download it instead.",
+  "folder": "Folder",
+  "client_library_manage": "Client folders",
+  "client_library_mapping_description": "Select the client whose Documents section should show each folder. Changing an assignment changes the folder view; files stay on the file server. Each client can have one folder.",
+  "client_library_unassigned": "Unassigned",
+  "client_library_other_company": "Assigned to another company",
+  "client_library_no_folders": "No client folders found."
 }

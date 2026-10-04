@@ -1,12 +1,13 @@
-import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import { File, Folder } from 'react-feather';
+import { useTranslation } from 'react-i18next';
 import { endpoint } from '$app/common/helpers';
 import { request } from '$app/common/helpers/request';
+import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
 import { Card, CardContainer } from '$app/components/cards';
 import { Button } from '$app/components/forms';
+import { ClientFilePreview, filePreviewKind } from './ClientFilePreview';
 
 interface LibraryEntry {
   name: string;
@@ -26,6 +27,11 @@ export function DocumentLibrary({ clientId }: { clientId: string }) {
   const [t] = useTranslation();
   const hasPermission = useHasPermission();
   const [path, setPath] = useState('');
+  const [preview, setPreview] = useState<LibraryEntry | null>(null);
+  useEffect(() => {
+    setPath('');
+    setPreview(null);
+  }, [clientId]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const base = endpoint('/api/v1/clients/:id/file-library', { id: clientId });
@@ -79,6 +85,13 @@ export function DocumentLibrary({ clientId }: { clientId: string }) {
   const ancestors = path.split('/').filter(Boolean);
   return (
     <Card title={t('documents')} className="mb-4">
+      {preview && (
+        <ClientFilePreview
+          file={preview}
+          onClose={() => setPreview(null)}
+          onDownload={() => download(preview)}
+        />
+      )}
       <CardContainer>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <nav
@@ -157,7 +170,11 @@ export function DocumentLibrary({ clientId }: { clientId: string }) {
                       type="button"
                       disabled={busy}
                       onClick={() =>
-                        entry.is_dir ? setPath(entry.path) : download(entry)
+                        entry.is_dir
+                          ? setPath(entry.path)
+                          : filePreviewKind(entry.name)
+                            ? setPreview(entry)
+                            : download(entry)
                       }
                       className="flex items-center gap-3 text-left hover:underline"
                     >

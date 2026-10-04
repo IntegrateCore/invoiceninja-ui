@@ -1,13 +1,14 @@
-import { DocumentLibrary } from './DocumentLibrary';
-import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { endpoint } from '$app/common/helpers';
 import { request } from '$app/common/helpers/request';
+import { useAdmin } from '$app/common/hooks/permissions/useHasPermission';
 import { $refetch } from '$app/common/hooks/useRefetch';
-import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
 import { Card, CardContainer } from '$app/components/cards';
 import { Button, SelectField } from '$app/components/forms';
+import { ClientFolderManager } from './ClientFolderManager';
+import { DocumentLibrary } from './DocumentLibrary';
 
 interface LibraryStatus {
   enabled: boolean;
@@ -27,8 +28,8 @@ export function ClientFileLibrary({
 }) {
   const [t] = useTranslation();
   const queryClient = useQueryClient();
-  const hasPermission = useHasPermission();
-  const canEdit = hasPermission('edit_client');
+  const { isAdmin, isOwner } = useAdmin();
+  const canEdit = isAdmin || isOwner;
   const url = endpoint('/api/v1/clients/:id/file-library', { id: clientId });
   const status = useQuery<LibraryStatus>({
     queryKey: ['client-file-library', clientId],
@@ -66,6 +67,12 @@ export function ClientFileLibrary({
       await queryClient.invalidateQueries({
         queryKey: ['document-library', clientId],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ['client-folder-catalog'],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['client-file-library-folders'],
+      });
       $refetch(['clients', 'documents']);
     } catch (failure: unknown) {
       const response = failure as {
@@ -97,13 +104,14 @@ export function ClientFileLibrary({
       <Card title={t('client_file_library')} className="mb-4">
         <CardContainer>
           <p className="text-sm">{t('client_library_description')}</p>
+          {canEdit && <ClientFolderManager />}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="w-full sm:max-w-lg">
               <SelectField
                 label={t('client_library_folder')}
                 value={folder}
                 onValueChange={setFolder}
-                disabled={!canEdit || busy || Boolean(status.data.folder)}
+                disabled={!canEdit || busy}
                 withBlank
                 placeholder={t('client_library_choose')}
               >
@@ -117,13 +125,19 @@ export function ClientFileLibrary({
                 ))}
               </SelectField>
             </div>
-            {canEdit && !status.data.folder && (
+            {canEdit && folder !== (status.data.folder ?? '') && (
               <Button
                 behavior="button"
                 disabled={busy || !folder}
                 onClick={() => save()}
               >
-                {t(busy ? 'processing' : 'client_library_connect')}
+                {t(
+                  busy
+                    ? 'processing'
+                    : status.data.folder
+                      ? 'save'
+                      : 'client_library_connect'
+                )}
               </Button>
             )}
             {canEdit && status.data.folder && (
@@ -171,7 +185,12 @@ export function ClientFileLibrary({
           )}
         </CardContainer>
       </Card>
-      {status.data.folder && <DocumentLibrary clientId={clientId} />}
+      {status.data.folder && (
+        <DocumentLibrary
+          key={`${clientId}:${status.data.folder}`}
+          clientId={clientId}
+        />
+      )}
     </>
   );
 }

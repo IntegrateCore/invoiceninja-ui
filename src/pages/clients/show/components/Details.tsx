@@ -8,25 +8,26 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-import { Link } from '$app/components/forms';
+import { useTranslation } from 'react-i18next';
+import { useColorScheme } from '$app/common/colors';
+import { numberFormat } from '$app/common/helpers/number-format';
+import { route } from '$app/common/helpers/route';
 import { useFormatMoney } from '$app/common/hooks/money/useFormatMoney';
 import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
-import { Client } from '$app/common/interfaces/client';
-import { EntityStatus } from '$app/components/EntityStatus';
-import { useTranslation } from 'react-i18next';
-import { useGetSettingWithLevel } from '$app/common/hooks/useGetSetting';
-import { route } from '$app/common/helpers/route';
-import { CustomFields, useCustomField } from '$app/components/CustomField';
 import { useFormatCustomFieldValue } from '$app/common/hooks/useFormatCustomFieldValue';
-import { useColorScheme } from '$app/common/colors';
+import { useGetSettingWithLevel } from '$app/common/hooks/useGetSetting';
+import { Client } from '$app/common/interfaces/client';
+import { Settings } from '$app/common/interfaces/company.interface';
+import { CustomFields, useCustomField } from '$app/components/CustomField';
+import { EntityStatus } from '$app/components/EntityStatus';
+import { Link } from '$app/components/forms';
 import { InfoCard } from '$app/components/InfoCard';
+import { TagPills } from '$app/components/tags/TagPills';
+import { isConsultingHoursCustomField } from '../../common/helpers/consulting-hours';
 import { CurrencyCodeBadge } from './CurrencyCodeBadge';
 import { PaymentTermsBadge } from './PaymentTermsBadge';
 import { TaxDataModal } from './TaxDataModal';
 import { TaxExemptBadge } from './TaxExemptBadge';
-import { Settings } from '$app/common/interfaces/company.interface';
-import { numberFormat } from '$app/common/helpers/number-format';
-import { TagPills } from '$app/components/tags/TagPills';
 
 interface Props {
   client: Client;
@@ -43,10 +44,11 @@ export function Details(props: Props) {
   const formatMoney = useFormatMoney();
   const customField = useCustomField();
   const formatCustomFieldValue = useFormatCustomFieldValue();
+  const fields = (['client1', 'client2', 'client3', 'client4'] as const).filter(
+    (field) => !isConsultingHoursCustomField(company, field)
+  );
 
   const isAnyCustomFieldPopulated = () => {
-    const fields = ['client1', 'client2', 'client3', 'client4'];
-
     return fields.some((field) => {
       const label = customField(field as CustomFields).label();
       const value = client[`custom_value${field.slice(-1)}` as keyof Client];
@@ -86,11 +88,12 @@ export function Details(props: Props) {
               </div>
             </div>
           }
-          className="h-full 2xl:h-max col-span-12 lg:col-span-6 xl:col-span-4 2xl:col-span-3 shadow-sm p-4"
-          style={{ borderColor: colors.$24 }}
+          className="h-max col-span-12 lg:col-span-6 xl:col-span-4 2xl:col-span-3 shadow-sm p-4"
+          style={{ borderColor: colors.$24, overflow: 'visible' }}
           withoutPadding
+          withoutTruncate
         >
-          <div className="flex flex-col pt-1 space-y-3 h-44 overflow-y-auto">
+          <div className="flex flex-col pt-1 space-y-3">
             <div className="flex flex-col space-y-1">
               <span
                 className="text-sm font-medium"
@@ -266,7 +269,7 @@ export function Details(props: Props) {
 
             {isAnyCustomFieldPopulated() && (
               <div className="flex flex-col space-y-1">
-                {['client1', 'client2', 'client3', 'client4'].map((field) => {
+                {fields.map((field) => {
                   const label = customField(field as CustomFields).label();
                   const value =
                     client[`custom_value${field.slice(-1)}` as keyof Client];

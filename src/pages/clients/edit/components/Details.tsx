@@ -8,22 +8,24 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-import { Card, Element } from '$app/components/cards';
-import { InputField, SelectField } from '$app/components/forms';
-import { useGroupSettingsQuery } from '$app/common/queries/group-settings';
-import { useTranslation } from 'react-i18next';
-import { Client } from '$app/common/interfaces/client';
 import { set } from 'lodash';
 import { Dispatch, SetStateAction } from 'react';
-import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
-import { CustomField } from '$app/components/CustomField';
-import { ValidationBag } from '$app/common/interfaces/validation-bag';
-import Toggle from '$app/components/forms/Toggle';
-import { EntityStatus } from '$app/components/EntityStatus';
+import { useTranslation } from 'react-i18next';
 import { useColorScheme } from '$app/common/colors';
-import { UserSelector } from '$app/components/users/UserSelector';
-import { Tag, TAG_ENTITY_TYPES } from '$app/common/interfaces/tag';
+import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
+import { Client } from '$app/common/interfaces/client';
+import { TAG_ENTITY_TYPES, Tag } from '$app/common/interfaces/tag';
+import { ValidationBag } from '$app/common/interfaces/validation-bag';
+import { useGroupSettingsQuery } from '$app/common/queries/group-settings';
+import { CustomField } from '$app/components/CustomField';
+import { Card, Element } from '$app/components/cards';
+import { EntityStatus } from '$app/components/EntityStatus';
+import { InputField, SelectField } from '$app/components/forms';
+import Toggle from '$app/components/forms/Toggle';
 import { TagPillSelector } from '$app/components/tags/TagPillSelector';
+import { UserSelector } from '$app/components/users/UserSelector';
+import { isConsultingHoursCustomField } from '../../common/helpers/consulting-hours';
+
 interface Props {
   client: Client | undefined;
   setClient: Dispatch<SetStateAction<Client | undefined>>;
@@ -213,49 +215,53 @@ export function Details(props: Props) {
         </SelectField>
       </Element>
 
-      {company?.custom_fields?.client1 && (
-        <CustomField
-          field="client1"
-          defaultValue={props.client?.custom_value1}
-          value={company.custom_fields.client1}
-          onValueChange={(value) =>
-            handleCustomFieldChange('custom_value1', value)
-          }
-        />
-      )}
+      {company?.custom_fields?.client1 &&
+        !isConsultingHoursCustomField(company, 'client1') && (
+          <CustomField
+            field="client1"
+            defaultValue={props.client?.custom_value1}
+            value={company.custom_fields.client1}
+            onValueChange={(value) =>
+              handleCustomFieldChange('custom_value1', value)
+            }
+          />
+        )}
 
-      {company?.custom_fields?.client2 && (
-        <CustomField
-          field="client2"
-          defaultValue={props.client?.custom_value2}
-          value={company.custom_fields.client2}
-          onValueChange={(value) =>
-            handleCustomFieldChange('custom_value2', value)
-          }
-        />
-      )}
+      {company?.custom_fields?.client2 &&
+        !isConsultingHoursCustomField(company, 'client2') && (
+          <CustomField
+            field="client2"
+            defaultValue={props.client?.custom_value2}
+            value={company.custom_fields.client2}
+            onValueChange={(value) =>
+              handleCustomFieldChange('custom_value2', value)
+            }
+          />
+        )}
 
-      {company?.custom_fields?.client3 && (
-        <CustomField
-          field="client3"
-          defaultValue={props.client?.custom_value3}
-          value={company.custom_fields.client3}
-          onValueChange={(value) =>
-            handleCustomFieldChange('custom_value3', value)
-          }
-        />
-      )}
+      {company?.custom_fields?.client3 &&
+        !isConsultingHoursCustomField(company, 'client3') && (
+          <CustomField
+            field="client3"
+            defaultValue={props.client?.custom_value3}
+            value={company.custom_fields.client3}
+            onValueChange={(value) =>
+              handleCustomFieldChange('custom_value3', value)
+            }
+          />
+        )}
 
-      {company?.custom_fields?.client4 && (
-        <CustomField
-          field="client4"
-          defaultValue={props.client?.custom_value4}
-          value={company.custom_fields.client4}
-          onValueChange={(value) =>
-            handleCustomFieldChange('custom_value4', value)
-          }
-        />
-      )}
+      {company?.custom_fields?.client4 &&
+        !isConsultingHoursCustomField(company, 'client4') && (
+          <CustomField
+            field="client4"
+            defaultValue={props.client?.custom_value4}
+            value={company.custom_fields.client4}
+            onValueChange={(value) =>
+              handleCustomFieldChange('custom_value4', value)
+            }
+          />
+        )}
     </Card>
   );
 }

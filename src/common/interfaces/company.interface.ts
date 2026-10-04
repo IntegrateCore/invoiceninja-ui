@@ -19,6 +19,7 @@ export interface Company {
   industry_id: string;
   settings: Settings;
   custom_fields: Record<string, string>;
+  consulting_hours_custom_field?: number;
   enabled_tax_rates: number;
   enabled_item_tax_rates: number;
   enable_product_discount: boolean;

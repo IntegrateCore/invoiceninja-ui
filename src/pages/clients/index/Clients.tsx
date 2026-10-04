@@ -8,45 +8,46 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-import { useTitle } from '$app/common/hooks/useTitle';
-import { Page } from '$app/components/Breadcrumbs';
-import { DataTable } from '$app/components/DataTable';
-import { Default } from '$app/components/layouts/Default';
+import { useAtom } from 'jotai';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  defaultColumns,
-  useAllClientColumns,
-  useClientColumns,
-} from '../common/hooks/useClientColumns';
+import { Guard } from '$app/common/guards/Guard';
+import { or } from '$app/common/guards/guards/or';
+import { permission } from '$app/common/guards/guards/permission';
+import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
+import { useDisableNavigation } from '$app/common/hooks/useDisableNavigation';
 import {
   useEntityTagFilterColumns,
   useTagFilterCleanup,
 } from '$app/common/hooks/useEntityTagFilters';
+import { useReactSettings } from '$app/common/hooks/useReactSettings';
+import { useTitle } from '$app/common/hooks/useTitle';
+import { Client } from '$app/common/interfaces/client';
 import { TAG_ENTITY_TYPES } from '$app/common/interfaces/tag';
+import { useClientQuery } from '$app/common/queries/clients';
+import { Page } from '$app/components/Breadcrumbs';
+import { DataTable } from '$app/components/DataTable';
 import { DataTableColumnsPicker } from '$app/components/DataTableColumnsPicker';
+import { InputLabel } from '$app/components/forms';
 import { ImportButton } from '$app/components/import/ImportButton';
-import { useActions } from '../common/hooks/useActions';
-import { Guard } from '$app/common/guards/Guard';
-import { or } from '$app/common/guards/guards/or';
-import { permission } from '$app/common/guards/guards/permission';
-import { useCustomBulkActions } from '../common/hooks/useCustomBulkActions';
-import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
+import { Default } from '$app/components/layouts/Default';
 import {
   ChangeTemplateModal,
   useChangeTemplate,
 } from '$app/pages/settings/invoice-design/pages/custom-designs/components/ChangeTemplate';
-import { Client } from '$app/common/interfaces/client';
-import { InputLabel } from '$app/components/forms';
-import { useReactSettings } from '$app/common/hooks/useReactSettings';
-import { useEffect, useState } from 'react';
-import { useAtom } from 'jotai';
-import { useClientQuery } from '$app/common/queries/clients';
-import { useDisableNavigation } from '$app/common/hooks/useDisableNavigation';
+import { ClientFolderManager } from '../common/components/ClientFolderManager';
 import {
   ClientSlider,
   clientSliderAtom,
   clientSliderVisibilityAtom,
 } from '../common/components/ClientSlider';
+import { useActions } from '../common/hooks/useActions';
+import {
+  defaultColumns,
+  useAllClientColumns,
+  useClientColumns,
+} from '../common/hooks/useClientColumns';
+import { useCustomBulkActions } from '../common/hooks/useCustomBulkActions';
 
 export default function Clients() {
   useTitle('clients');
@@ -125,6 +126,7 @@ export default function Clients() {
         filterColumns={shouldShowTagFilter ? filterColumns : undefined}
         rightSide={
           <div className="flex items-center space-x-2">
+            <ClientFolderManager />
             <DataTableColumnsPicker
               table="client"
               columns={clientColumns as unknown as string[]}
