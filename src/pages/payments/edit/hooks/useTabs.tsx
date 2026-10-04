@@ -8,17 +8,18 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
+import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { route } from '$app/common/helpers/route';
 import {
   useAdmin,
   useHasPermission,
 } from '$app/common/hooks/permissions/useHasPermission';
 import { useEntityAssigned } from '$app/common/hooks/useEntityAssigned';
+import { PaymentStatus } from '$app/common/enums/payment-status';
 import { Payment } from '$app/common/interfaces/payment';
 import { DocumentsTabLabel } from '$app/components/DocumentsTabLabel';
 import { Tab } from '$app/components/Tabs';
-import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
 
 interface Params {
   payment: Payment | undefined;
@@ -81,7 +82,13 @@ export function useTabs(params: Params) {
       tabs = tabs.filter(({ name }) => name !== t('apply'));
     }
 
-    if (!(payment.amount !== payment.refunded && !payment.is_deleted)) {
+    if (
+      !(
+        payment.amount !== payment.refunded &&
+        payment.status_id !== PaymentStatus.Pending &&
+        !payment.is_deleted
+      )
+    ) {
       tabs = tabs.filter(({ name }) => name !== t('refund'));
     }
   }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { endpoint } from '$app/common/helpers';
 import { request } from '$app/common/helpers/request';
@@ -21,16 +21,15 @@ export function ClientFileLibrary({ clientId }: { clientId: string }) {
   const hasPermission = useHasPermission();
   const canEdit = hasPermission('edit_client');
   const url = endpoint('/api/v1/clients/:id/file-library', { id: clientId });
-  const status = useQuery<LibraryStatus>(
-    ['client-file-library', clientId],
-    () => request('GET', url).then((response) => response.data.data)
-  );
-  const folders = useQuery<string[]>(
-    ['client-file-library-folders', clientId],
-    () =>
-      request('GET', `${url}/folders`).then((response) => response.data.data),
-    { enabled: canEdit && status.data?.enabled === true }
-  );
+  const status = useQuery<LibraryStatus>({
+    queryKey: ['client-file-library', clientId],
+    queryFn: () => request('GET', url).then((response) => response.data.data),
+  });
+  const folders = useQuery<string[]>({
+    queryKey: ['client-file-library-folders', clientId],
+    queryFn: () => request('GET', `${url}/folders`).then((response) => response.data.data),
+    enabled: canEdit && status.data?.enabled === true,
+  });
   const [folder, setFolder] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

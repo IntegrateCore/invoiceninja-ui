@@ -8,17 +8,17 @@
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
-import { Product } from '$app/common/interfaces/product';
-import { ProductCreate } from '$app/pages/invoices/common/components/ProductCreate';
+import classNames from 'classnames';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ComboboxAsync, Entry } from '../forms/Combobox';
-import { endpoint, trans } from '$app/common/helpers';
-import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
-import classNames from 'classnames';
-import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
 import { useColorScheme } from '$app/common/colors';
+import { endpoint, trans } from '$app/common/helpers';
+import { useHasPermission } from '$app/common/hooks/permissions/useHasPermission';
+import { useCurrentCompany } from '$app/common/hooks/useCurrentCompany';
+import { Product } from '$app/common/interfaces/product';
+import { ProductCreate } from '$app/pages/invoices/common/components/ProductCreate';
 import { ErrorMessage } from '../ErrorMessage';
+import { ComboboxAsync, Entry } from '../forms/Combobox';
 
 interface Props {
   defaultValue?: string | number | boolean;
@@ -35,6 +35,7 @@ interface Props {
   withoutAction?: boolean;
   clearInputAfterSelection?: boolean;
   withShadow?: boolean;
+  nullable?: boolean;
 }
 
 export function ProductSelector(props: Props) {
@@ -112,7 +113,7 @@ export function ProductSelector(props: Props) {
         }}
         onDismiss={props.onClearButtonClick}
         sortBy="product_key|asc"
-        nullable
+        nullable={props.nullable ?? true}
         key="product_selector"
         clearInputAfterSelection={props.clearInputAfterSelection}
         withShadow={props.withShadow}
