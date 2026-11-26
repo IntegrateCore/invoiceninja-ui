@@ -43,6 +43,7 @@ import { calculateTime } from '../helpers/calculate-time';
 import { shouldShowStartTaskButton } from '../helpers/task';
 import { useStart } from '../hooks/useStart';
 import { useStop } from '../hooks/useStop';
+import { ConsultingHoursWarning } from './ConsultingHoursWarning';
 import { TaskStatus as TaskStatusBadge } from './TaskStatus';
 
 dayjs.extend(duration);
@@ -230,6 +231,10 @@ export function TaskDetails(props: Props) {
               readonly={Boolean(task.project_id)}
               errorMessage={errors?.errors.client_id}
             />
+
+            {page === 'create' && task.client_id && (
+              <ConsultingHoursWarning clientId={task.client_id} />
+            )}
 
             {task.client_id && (
               <ClientActionButtons clientId={task.client_id} />
