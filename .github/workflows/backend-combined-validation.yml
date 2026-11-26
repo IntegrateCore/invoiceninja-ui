@@ -14,6 +14,15 @@ jobs:
           repository: IntegrateCore/invoiceninja
           ref: 7f4db47c4a1ad67370f23213aa66885b84197744
           persist-credentials: false
+          sparse-checkout: .github/validation/combined-image.sh
+          sparse-checkout-cone-mode: false
+          path: validation-wrapper
+      - uses: actions/checkout@v4
+        with:
+          repository: IntegrateCore/invoiceninja
+          ref: 173ff5a8362e49956b1bdb59197b286aa449e1c8
+          persist-credentials: false
+          path: backend
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -24,4 +33,7 @@ jobs:
           tools: composer:v2
           coverage: none
       - name: Build and test without publishing or deploying
-        run: bash .github/validation/combined-image.sh
+        working-directory: backend
+        run: |
+          test "$(git rev-parse HEAD)" = 173ff5a8362e49956b1bdb59197b286aa449e1c8
+          bash ../validation-wrapper/.github/validation/combined-image.sh
