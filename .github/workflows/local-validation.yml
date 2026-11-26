@@ -93,4 +93,18 @@ jobs:
           (( gate == 0 && health == 0 && migrations == 0 )) || exit 1
           LOCAL
           bash -n "$validation/local.sh"
-          bash "$validation/local.sh" "$validation" 3>&1 > "$validation/run.log" 2>&1
+          if bash "$validation/local.sh" "$validation" 3>&1 > "$validation/run.log" 2>&1; then
+            exit 0
+          else
+            result=$?
+          fi
+          # Only fixed diagnostic labels and numeric Dockerfile locations leave the runner.
+          for category in 'storage:no space left|disk quota' 'network:timed out|connection reset|temporary failure resolving|TLS handshake|502 Bad Gateway|503 Service Unavailable' 'apt:unable to locate package|failed to fetch|packages have unmet dependencies|exit code: 100' 'php-extension:PECL|No releases available|Cannot find config.m4|make: .*Error' 'composer:requirements could not be resolved|failed to download|lock file is not compatible' 'permission:permission denied|unauthorized|too many requests'; do
+            label=$(cut -d: -f1 <<< "$category")
+            pattern=$(cut -d: -f2- <<< "$category")
+            if grep -Eiq "$pattern" "$validation/run.log"; then
+              printf 'Diagnostic category: %s\n' "$label"
+            fi
+          done
+          sed -nE 's/^Dockerfile:([0-9]+)$/Dockerfile failure line: \1/p' "$validation/run.log" | sort -u
+          exit "$result"
