@@ -22,7 +22,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          umask 077
+          umask 022
           validation=$(mktemp -d "$RUNNER_TEMP/invoice-validation.XXXXXX")
           trap 'rm -rf "$validation"' EXIT
           public=https://raw.githubusercontent.com/IntegrateCore/invoiceninja/c64b9118385603d93f9c640fde0a9fcaaed73e8b/scripts/integratecore-release
@@ -113,4 +113,5 @@ jobs:
             fi
           done
           sed -nE 's/^.*Dockerfile:([0-9]+).*$/Dockerfile failure line: \1/p' "$validation/run.log" | sort -u
+          grep -Eo '(^| )(app|php-runtime) [0-9]+/[0-9]+|exporting to image|naming to docker.io/library/invoiceninja|writing image|ERROR: failed to solve|ERROR: failed to update|ERROR: failed to write|ERROR: failed to build|permission denied|operation not permitted|failed to create|failed to remove|failed to read|failed to open' "$validation/run.log" | tail -32 || true
           exit "$result"
