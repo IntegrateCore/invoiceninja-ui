@@ -1,0 +1,93 @@
+name: IntegrateCore runner-only validation
+on:
+  push:
+    branches: [ci/integratecore-local-validation-20261126]
+permissions: {}
+jobs:
+  validate:
+    if: github.repository == 'IntegrateCore/invoiceninja-ui' && github.event_name == 'push' && github.ref == 'refs/heads/ci/integratecore-local-validation-20261126'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+        with:
+          php-version: '8.4'
+          extensions: bcmath, gd, imagick, intl, mbstring, pdo_mysql, soap, zip
+          tools: composer:v2
+          coverage: none
+      - name: Build, test and smoke the local image
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          validation=$(mktemp -d "$RUNNER_TEMP/invoice-validation.XXXXXX")
+          trap 'rm -rf "$validation"' EXIT
+          public=https://raw.githubusercontent.com/IntegrateCore/invoiceninja/c64b9118385603d93f9c640fde0a9fcaaed73e8b/scripts/integratecore-release
+          for script in candidate.sh common.sh test-candidate.sh; do
+            curl -q -fsS --retry 3 --max-time 30 "$public/$script" -o "$validation/$script"
+          done
+          cat > "$validation/local.sh" <<'LOCAL'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+          script_dir=$(cd -- "$(dirname -- "")" && pwd)
+          source "$script_dir/common.sh"
+          backend=173ff5a8362e49956b1bdb59197b286aa449e1c8
+          ui=98090aa2595fddca5d1e8433c4436d1292245ec7
+          stage=build
+          trap 'printf "%s: failed\n" "$stage" >&3' ERR
+          LOCAL
+          awk '/^work=\$\(mktemp/{keep=1} /^# Keep test dependencies/{keep=0} keep' "$validation/candidate.sh" |
+            sed 's|^candidate=.*|candidate="invoiceninja:validation-$run_id"|' >> "$validation/local.sh"
+          cat >> "$validation/local.sh" <<'LOCAL'
+          printf "Pinned backend and UI, local image build, PHP lineage and runtime: passed\n" >&3
+          stage="disposable test database setup"
+          LOCAL
+          awk '/^docker network create --internal/{keep=1} /^start_db$/{keep=0} keep' "$validation/candidate.sh" >> "$validation/local.sh"
+          cat >> "$validation/local.sh" <<'LOCAL'
+          start_db
+          stage="test dependency installation"
+          docker run -d --network bridge --name "$test_app" --entrypoint sleep "$candidate" infinity
+          docker exec "$test_app" composer install --no-interaction --no-progress --prefer-dist --no-scripts
+          docker network connect "$network" "$test_app"
+          docker network disconnect bridge "$test_app"
+          stage="PR #12 test gate"
+          gate=0
+          docker exec -i "" -e APP_ENV=testing "$test_app" bash -se \
+            < "$script_dir/test-candidate.sh" > "$script_dir/gate.log" 2>&1 || gate=$?
+          sed -E 's/\x1b\[[0-9;]*m//g' "$script_dir/gate.log" |
+            awk '/^OK \([0-9]+ tests?, [0-9]+ assertions?\)$/ {print "PHPUnit: " $0}' >&3
+          if (( gate == 0 )); then
+            printf "PR #12 full test selection: passed\n" >&3
+          else
+            printf "PR #12 full test selection: failed (exit %d)\n" "$gate" >&3
+            awk '/^Tests: [0-9]+, Assertions: [0-9]+(, (Errors|Failures|Skipped|Warnings): [0-9]+)*\.$/ { print }' "$script_dir/gate.log" >&3
+          fi
+          stage="fresh smoke database setup"
+          docker rm -fv "$test_app" "$database"
+          start_db
+          db_tables=$(docker exec "$database" sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h127.0.0.1 -uroot -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()" ninja')
+          [[ "$db_tables" == 0 ]]
+          printf "Smoke MySQL schema starts empty\n" >&3
+          stage="normal entrypoint boot"
+          docker run -d --network "$network" "" --name "$smoke" -e APP_ENV=production "$candidate"
+          health=0
+          if wait_health "$smoke"; then
+            printf "Normal entrypoint HTTP /health: ready (status=ok)\n" >&3
+          else
+            health=1
+            printf "Normal entrypoint HTTP /health: not ready\n" >&3
+          fi
+          migrations=0
+          if migrations_ready "$smoke"; then
+            printf "Fresh MySQL migrations: complete (no pending migrations)\n" >&3
+          else
+            migrations=1
+            printf "Fresh MySQL migrations: not verified complete\n" >&3
+          fi
+          (( gate == 0 && health == 0 && migrations == 0 )) || exit 1
+          LOCAL
+          bash -n "$validation/local.sh"
+          bash "$validation/local.sh" 3>&1 > "$validation/run.log" 2>&1
