@@ -29,6 +29,8 @@ jobs:
           for script in candidate.sh common.sh test-candidate.sh; do
             curl -q -fsS --retry 3 --max-time 30 "$public/$script" -o "$validation/$script"
           done
+          # PHP 8.4.27 bundles zip 1.22.8, which has its own version scheme.
+          sed -i 's/"pdo_mysql","zip"/"pdo_mysql"/; s/!extension_loaded("imagick")/!extension_loaded("zip") || phpversion("zip") !== "1.22.8" || !class_exists("ZipArchive") || !extension_loaded("imagick")/' "$validation/common.sh"
           cat > "$validation/local.sh" <<'LOCAL'
           #!/usr/bin/env bash
           set -Eeuo pipefail
@@ -40,7 +42,8 @@ jobs:
           trap 'printf "%s: failed\n" "$stage" >&3' ERR
           LOCAL
           awk '/^work=\$\(mktemp/{keep=1} /^# Keep test dependencies/{keep=0} keep' "$validation/candidate.sh" |
-            sed 's|^candidate=.*|candidate="invoiceninja:validation-$run_id"|' >> "$validation/local.sh"
+            sed 's|^candidate=.*|candidate="invoiceninja:validation-$run_id"|' |
+            awk '/^checkout / {print "stage=checkout"} /^composer install / {print "stage=backend-assets"} /^\( *$/ {print "stage=ui-assets"} /^docker build / {print "stage=image-build"} /^php_parent=/ {print "stage=php-lineage"} /^verify_labels / {print "stage=image-labels"} /^verify_runtime / {print "stage=runtime-checks"} {print}' >> "$validation/local.sh"
           cat >> "$validation/local.sh" <<'LOCAL'
           printf "Pinned backend and UI, local image build, PHP lineage and runtime: passed\n" >&3
           stage="disposable test database setup"
