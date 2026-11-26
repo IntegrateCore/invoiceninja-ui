@@ -108,6 +108,7 @@ export function CreateTaskModal(props: Props) {
     >
       {task && (
         <TaskDetails
+          page="create"
           task={task}
           handleChange={handleChange}
           errors={errors}

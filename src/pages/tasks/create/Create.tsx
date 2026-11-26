@@ -151,7 +151,12 @@ export default function Create() {
       breadcrumbs={pages}
     >
       {task && (
-        <TaskDetails task={task} handleChange={handleChange} errors={errors} />
+        <TaskDetails
+          page="create"
+          task={task}
+          handleChange={handleChange}
+          errors={errors}
+        />
       )}
       {task && <TaskTable task={task} handleChange={handleChange} />}
     </Default>
