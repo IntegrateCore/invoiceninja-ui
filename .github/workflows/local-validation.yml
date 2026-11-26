@@ -32,7 +32,7 @@ jobs:
           cat > "$validation/local.sh" <<'LOCAL'
           #!/usr/bin/env bash
           set -Eeuo pipefail
-          script_dir=$(cd -- "$(dirname -- "")" && pwd)
+          script_dir=$1
           source "$script_dir/common.sh"
           backend=173ff5a8362e49956b1bdb59197b286aa449e1c8
           ui=98090aa2595fddca5d1e8433c4436d1292245ec7
@@ -55,7 +55,7 @@ jobs:
           docker network disconnect bridge "$test_app"
           stage="PR #12 test gate"
           gate=0
-          docker exec -i "" -e APP_ENV=testing "$test_app" bash -se \
+          docker exec -i "${app_env[@]}" -e APP_ENV=testing "$test_app" bash -se \
             < "$script_dir/test-candidate.sh" > "$script_dir/gate.log" 2>&1 || gate=$?
           sed -E 's/\x1b\[[0-9;]*m//g' "$script_dir/gate.log" |
             awk '/^OK \([0-9]+ tests?, [0-9]+ assertions?\)$/ {print "PHPUnit: " $0}' >&3
@@ -72,7 +72,7 @@ jobs:
           [[ "$db_tables" == 0 ]]
           printf "Smoke MySQL schema starts empty\n" >&3
           stage="normal entrypoint boot"
-          docker run -d --network "$network" "" --name "$smoke" -e APP_ENV=production "$candidate"
+          docker run -d --network "$network" "${app_env[@]}" --name "$smoke" -e APP_ENV=production "$candidate"
           health=0
           if wait_health "$smoke"; then
             printf "Normal entrypoint HTTP /health: ready (status=ok)\n" >&3
@@ -90,4 +90,4 @@ jobs:
           (( gate == 0 && health == 0 && migrations == 0 )) || exit 1
           LOCAL
           bash -n "$validation/local.sh"
-          bash "$validation/local.sh" 3>&1 > "$validation/run.log" 2>&1
+          bash "$validation/local.sh" "$validation" 3>&1 > "$validation/run.log" 2>&1
