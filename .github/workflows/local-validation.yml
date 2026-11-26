@@ -39,11 +39,17 @@ jobs:
           backend=173ff5a8362e49956b1bdb59197b286aa449e1c8
           ui=98090aa2595fddca5d1e8433c4436d1292245ec7
           stage=build
+          build_candidate() {
+            if docker build --progress=plain "$@"; then return 0; fi
+            printf "Local build failed once; retrying unchanged inputs on the same runner\n" >&3
+            sleep 15
+            docker build --progress=plain "$@"
+          }
           trap 'printf "%s: failed\n" "$stage" >&3' ERR
           LOCAL
           awk '/^work=\$\(mktemp/{keep=1} /^# Keep test dependencies/{keep=0} keep' "$validation/candidate.sh" |
             sed 's|^candidate=.*|candidate="invoiceninja:validation-$run_id"|' |
-            awk '/^checkout / {print "stage=checkout"} /^composer install / {print "stage=backend-assets"} /^\( *$/ {print "stage=ui-assets"} /^docker build / {print "stage=image-build"} /^php_parent=/ {print "stage=php-lineage"} /^verify_labels / {print "stage=image-labels"} /^verify_runtime / {print "stage=runtime-checks"} {print}' >> "$validation/local.sh"
+            awk '/^checkout / {print "stage=checkout"} /^composer install / {print "stage=backend-assets"} /^\( *$/ {print "stage=ui-assets"} /^docker build / {print "stage=image-build"; sub(/^docker build /, "build_candidate ")} /^php_parent=/ {print "stage=php-lineage"} /^verify_labels / {print "stage=image-labels"} /^verify_runtime / {print "stage=runtime-checks"} {print}' >> "$validation/local.sh"
           cat >> "$validation/local.sh" <<'LOCAL'
           printf "Pinned backend and UI, local image build, PHP lineage and runtime: passed\n" >&3
           stage="disposable test database setup"
@@ -99,12 +105,12 @@ jobs:
             result=$?
           fi
           # Only fixed diagnostic labels and numeric Dockerfile locations leave the runner.
-          for category in 'storage:no space left|disk quota' 'network:timed out|connection reset|temporary failure resolving|TLS handshake|502 Bad Gateway|503 Service Unavailable' 'apt:unable to locate package|failed to fetch|packages have unmet dependencies|exit code: 100' 'php-extension:PECL|No releases available|Cannot find config.m4|make: .*Error' 'composer:requirements could not be resolved|failed to download|lock file is not compatible' 'permission:permission denied|unauthorized|too many requests'; do
+          for category in 'storage:no space left|disk quota' 'pecl-no-release:no releases available' 'pecl-http-denied:HTTP[^ ]* 403|403 Forbidden' 'build-executor-denied:failed to solve.*permission denied|operation not permitted' 'build-executor-exit-137:exit code: 137' 'imagick-install:install-php-extensions imagick.*exit code:' 'network:timed out|connection reset|temporary failure resolving|TLS handshake|502 Bad Gateway|503 Service Unavailable' 'apt:unable to locate package|failed to fetch|packages have unmet dependencies|exit code: 100' 'php-extension:PECL|No releases available|Cannot find config.m4|make: .*Error' 'composer:requirements could not be resolved|failed to download|lock file is not compatible' 'permission:permission denied|unauthorized|too many requests'; do
             label=$(cut -d: -f1 <<< "$category")
             pattern=$(cut -d: -f2- <<< "$category")
             if grep -Eiq "$pattern" "$validation/run.log"; then
               printf 'Diagnostic category: %s\n' "$label"
             fi
           done
-          sed -nE 's/^Dockerfile:([0-9]+)$/Dockerfile failure line: \1/p' "$validation/run.log" | sort -u
+          sed -nE 's/^.*Dockerfile:([0-9]+).*$/Dockerfile failure line: \1/p' "$validation/run.log" | sort -u
           exit "$result"
